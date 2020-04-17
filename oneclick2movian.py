@@ -60,9 +60,9 @@ class Window(Frame):
         rad2.grid(column=2, row=0)
 
         self.lbl = Label(self, text="Movian IP")
-        self.lbl.place(x=200, y=23)
+        self.lbl.place(x=300, y=23)
         self.lb2 = Label(self, text="by nikkpap")
-        self.lb2.place(x=200, y=46)
+        self.lb2.place(x=300, y=46)
         txt_box1 = Entry(self, width=30)
         txt_box1.insert(END, '192.168.8.100')
         txt_box1.place(x=3, y=23)
@@ -167,7 +167,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a TCP/IP socket
 root = Tk()
 app = Window(def_path,root)
 root.title("Movian One Click Plugin Installer v0.2")
-root.geometry('450x150')
+root.geometry('600x300')
 root.resizable(False, False)
 root.mainloop()
 
