@@ -102,6 +102,9 @@ class Window(Frame):
 
 
     def test_ip(self):
+
+        self.lbl.configure(text="")
+
         rep = os.system('ping -w 1 ' + self.ip_movian)
         if rep == 0:
             print('server is up')
@@ -112,19 +115,23 @@ class Window(Frame):
 
 
     def down_log(self):
-        response = requests.get(f'http://{self.ip_movian}:{self.port_movian}')
-        if response:
-            print('Download OK... !')
-            recieve = requests.get(f'{self.url_movian}/api/logfile/0?mode=download')
-            with open(f'{self.def_path}\movian0.log', 'wb') as fo:
-                fo.write(recieve.content)
-            self.lbl.configure(text="Download OK... !!")
-        else:
-            # print('An error has occurred.')
+
+        self.lbl.configure(text="")
+
+        try:
+            response = requests.get(f'http://{self.ip_movian}:{self.port_movian}', timeout=5 )
+            if response:
+                print('Download OK... !')
+                recieve = requests.get(f'{self.url_movian}/api/logfile/0?mode=download')
+                with open(f'{self.def_path}\movian0.log', 'wb') as fo:
+                    fo.write(recieve.content)
+                self.lbl.configure(text="Download OK... !!")
+        except:
             self.lbl.configure(text="No Connection... !!")
 
 
     def install_plugin(self):
+        self.lbl.configure(text="")
         self.lbl.configure(text="Not yet... !!")
 
 
