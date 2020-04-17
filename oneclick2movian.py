@@ -47,7 +47,20 @@ url_movian = (f'http://{ip_movian}:{port_movian}')
 period_of_time = 3  # sec
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
-def_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+
+home = os.curdir
+
+if 'HOME' in os.environ:
+    home = os.environ['HOME']
+elif os.name == 'posix':
+    home = os.path.expanduser("~/")
+elif os.name == 'nt':
+    if 'HOMEPATH' in os.environ and 'HOMEDRIVE' in os.environ:
+        home = os.environ['HOMEDRIVE'] + os.environ['HOMEPATH']
+else:
+    home = os.environ['HOMEPATH']
+
+def_path = os.path.join(os.path.join(home), 'Desktop')
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a TCP/IP socket
 
 ####################################################################
