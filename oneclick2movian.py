@@ -18,38 +18,132 @@ from tkinter.ttk import *
 from pythonping import ping
 
 
-# Initialize first window0
-window0 = Tk()
 
-####################################################################
-# Variable Declarations
-####################################################################
-window0.title("Movian One Click Plugin Installer v0.1")
-window0.geometry('450x150')
-window0.resizable(False, False)
-lbl = Label(window0, text="Movian IP")
-lbl.place(x=200, y=23)
-lb2 = Label(window0, text="by nikkpap")
-lb2.place(x=200, y=46)
-txt_box1 = Entry(window0, width=30)
-txt_box1.insert(END, '192.168.8.100')
-txt_box1.place(x=3, y=23)
-txt_box2 = Entry(window0, width=30)
-txt_box2.insert(END, 'http://')
-txt_box2.place(x=3, y=46)
+class Window(Frame):
+    def __init__(self, def_path, master=None):
+        Frame.__init__(self, master)
+        self.master = master
+
+        self.def_path = def_path
+
+        # Menu Bar GUI
+        menu = Menu(self.master)
+        self.master.config(menu=menu)
+
+        fileMenu = Menu(menu)
+        fileMenu.add_command(label='Open', command=self.OpenFile)
+        fileMenu.add_command(label='D.Log', command=self.down_log)
+        fileMenu.add_command(label='Test.IP', command=self.test_ip)
+        fileMenu.add_command(label="Exit", command=self.exitProgram)
+        menu.add_cascade(label="File", menu=fileMenu)
+
+        editMenu = Menu(menu)
+        editMenu.add_command(label="Undo")
+        editMenu.add_command(label="Redo")
+        menu.add_cascade(label="Edit", menu=editMenu)
+
+        # Commands - Buttons GUI
+        self.pack(fill=BOTH, expand=1)
+        btn0 = Button(self, text="Test IP", command=self.test_ip)
+        btn0.place(x=10, y=110)
+        btn1 = Button(self, text="Download Log", command=self.down_log)
+        btn1.place(x=90, y=110)
+        btn2 = Button(self, text="Choose Path", command=self.OpenFile)
+        btn2.place(x=180, y=110)
+        btn3 = Button(self, text="Exit", command=self.exitProgram)
+        btn3.place(x=260, y=110)
+        btn4 = Button(self, text="About", command=self.about)
+        btn4.place(x=340, y=110)
+        rad1 = Radiobutton(self, text='.Zip   ', value=1, state='enable')
+        rad1.grid(column=1, row=0)
+        rad2 = Radiobutton(self, text='Http://', value=2, state='enable')
+        rad2.grid(column=2, row=0)
+
+        self.lbl = Label(self, text="Movian IP")
+        self.lbl.place(x=200, y=23)
+        self.lb2 = Label(self, text="by nikkpap")
+        self.lb2.place(x=200, y=46)
+        txt_box1 = Entry(self, width=30)
+        txt_box1.insert(END, '192.168.8.100')
+        txt_box1.place(x=3, y=23)
+        txt_box2 = Entry(self, width=30)
+        txt_box2.insert(END, 'http://')
+        txt_box2.place(x=3, y=46)
+        self.ip_movian = txt_box1.get()
+        self.port_movian = '42000'
+        self.url_movian = (f'http://{self.ip_movian}:{self.port_movian}')
+        period_of_time = 3  # sec
+
+
+    def OpenFile(self):
+
+        name = askopenfilename(initialdir="" + self.def_path, filetypes=(("Zip File", "*.zip"), ("All Files", "*.*")), title="Choose a Plugin")
+        dir_to_server = os.path.dirname(name)
+        base_name = os.path.basename(name)
+        startHTTPServer(dir_to_server)
+        webbrowser.open(f'{self.url_movian}/?url=http://{IPAddr}:8080/{base_name}')
+        # Using try in case user types in unknown file or closes without choosing a file.
+        try:
+            with open(name, 'r') as UseFile:
+                print(UseFile.read())
+        except:
+            self.messagebox.showinfo('Error', 'Cancel')
+
+
+    def startHTTPServer(self,dir_to_server):
+        PORT = 8080
+        os.chdir(dir_to_server)
+        Handler = http.server.SimpleHTTPRequestHandler
+        httpd = socketserver.TCPServer(("", PORT), Handler)
+        print("serving at port", PORT)
+        # webbrowser.open(f'{url_movian}/?url=http://{IPAddr}:8080/torrent.zip') ????????????
+        # can i use a timer to stop the server after 5 sec
+        httpd.serve_forever()
+
+
+    def test_ip(self):
+        rep = os.system('ping -w 1 ' + self.ip_movian)
+        if rep == 0:
+            print('server is up')
+            self.lbl.configure(text="Connection Established... !!")
+        else:
+            print('server is down')
+            self.lbl.configure(text="No Connection... !!")
+
+
+    def down_log(self):
+        response = requests.get(f'http://{self.ip_movian}:{self.port_movian}')
+        if response:
+            print('Download OK... !')
+            recieve = requests.get(f'{self.url_movian}/api/logfile/0?mode=download')
+            with open(f'{self.def_path}\movian0.log', 'wb') as fo:
+                fo.write(recieve.content)
+            self.lbl.configure(text="Download OK... !!")
+        else:
+            # print('An error has occurred.')
+            self.lbl.configure(text="No Connection... !!")
+
+
+    def install_plugin(self):
+        self.lbl.configure(text="Not yet... !!")
+
+
+    def about(self):
+        messagebox.showinfo('About', 'Movian One Click Plugin Installer by nikkpap @ 2019')
+
+
+    def exitProgram(self):
+        exit()
+
+
+
+
+
+# check if is windows
 is_windows = any(platform.win32_ver())
 
-#########################END OF GUI ################################
-#print("Your Computer IP Address is: " + IPAddr)
-ip_movian = txt_box1.get()
-port_movian = '42000'
-url_movian = (f'http://{ip_movian}:{port_movian}')
-period_of_time = 3  # sec
-hostname = socket.gethostname()
-IPAddr = socket.gethostbyname(hostname)
-
+# Default path
 home = os.curdir
-
 if 'HOME' in os.environ:
     home = os.environ['HOME']
 elif os.name == 'posix':
@@ -61,109 +155,19 @@ else:
     home = os.environ['HOMEPATH']
 
 def_path = os.path.join(os.path.join(home), 'Desktop')
+
+
+# Socket
+hostname = socket.gethostname()
+IPAddr = socket.gethostbyname(hostname)
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a TCP/IP socket
 
-####################################################################
-# Functions
-####################################################################
 
-# File manager function
+# Gui
+root = Tk()
+app = Window(def_path,root)
+root.title("Movian One Click Plugin Installer v0.2")
+root.geometry('450x150')
+root.resizable(False, False)
+root.mainloop()
 
-
-def OpenFile():
-
-    name = askopenfilename(initialdir="" + def_path, filetypes=(
-        ("Zip File", "*.zip"), ("All Files", "*.*")), title="Choose a Plugin")
-    dir_to_server = os.path.dirname(name)
-    base_name = os.path.basename(name)
-    startHTTPServer(dir_to_server)
-    webbrowser.open(f'{url_movian}/?url=http://{IPAddr}:8080/{base_name}')
-    # Using try in case user types in unknown file or closes without choosing a file.
-    try:
-        with open(name, 'r') as UseFile:
-            print(UseFile.read())
-    except:
-        messagebox.showinfo('Error', 'Cancel')
-
-
-def startHTTPServer(dir_to_server):
-    PORT = 8080
-    os.chdir(dir_to_server)
-    Handler = http.server.SimpleHTTPRequestHandler
-    httpd = socketserver.TCPServer(("", PORT), Handler)
-    print("serving at port", PORT)
-    # webbrowser.open(f'{url_movian}/?url=http://{IPAddr}:8080/torrent.zip') ????????????
-    # can i use a timer to stop the server after 5 sec
-    httpd.serve_forever()
-
-
-def test_ip():
-    rep = os.system('ping ' + ip_movian)
-    if rep == 0:
-        print('server is up')
-        lbl.configure(text="Connection Established... !!")
-    else:
-        print('server is down')
-        lbl.configure(text="No Connection... !!")
-
-
-def down_log():
-    response = requests.get(f'http://{ip_movian}:{port_movian}')
-    if response:
-        print('Download OK... !')
-        recieve = requests.get(f'{url_movian}/api/logfile/0?mode=download')
-        with open(f'{def_path}\movian0.log', 'wb') as fo:
-            fo.write(recieve.content)
-        lbl.configure(text="Download OK... !!")
-    else:
-        # print('An error has occurred.')
-        lbl.configure(text="No Connection... !!")
-
-
-def install_plugin():
-    lbl.configure(text="Not yet... !!")
-
-
-def about():
-    messagebox.showinfo(
-        'About', 'Movian One Click Plugin Installer by nikkpap @ 2019')
-
-####################################################################
-    # Menu Bar GUI
-####################################################################
-
-
-menu = Menu(window0)
-window0.config(menu=menu)
-
-file = Menu(menu)
-file.add_command(label='Open', command=OpenFile)
-file.add_command(label='D.Log', command=down_log)
-file.add_command(label='Test.IP', command=test_ip)
-file.add_command(label='Exit', command=lambda: exit())
-menu.add_cascade(label='File', menu=file)
-
-####################################################################
-# Commands - Buttons GUI
-####################################################################
-
-btn0 = Button(window0, text="Test IP", command=test_ip)
-btn0.place(x=10, y=110)
-btn1 = Button(window0, text="Download Log", command=down_log)
-btn1.place(x=90, y=110)
-btn2 = Button(window0, text="Choose Path", command=OpenFile)
-btn2.place(x=180, y=110)
-btn3 = Button(window0, text="Exit", command=exit)
-btn3.place(x=260, y=110)
-btn4 = Button(window0, text="About", command=about)
-btn4.place(x=340, y=110)
-rad1 = Radiobutton(window0, text='.Zip   ', value=1, state='enable')
-rad1.grid(column=1, row=0)
-rad2 = Radiobutton(window0, text='Http://', value=2, state='enable')
-rad2.grid(column=2, row=0)
-
-
-window0.mainloop()
-####################################################################
-# EOF
-####################################################################
