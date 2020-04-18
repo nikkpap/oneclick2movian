@@ -63,15 +63,15 @@ class Window(Frame):
         self.lbl.place(x=300, y=23)
         self.lb2 = Label(self, text="by nikkpap")
         self.lb2.place(x=300, y=46)
-        txt_box1 = Entry(self, width=30)
-        txt_box1.insert(END, '192.168.8.100')
-        txt_box1.place(x=3, y=23)
+        self.txt_box1 = Entry(self, width=30)
+        self.txt_box1.insert(END, '192.168.8.100')
+        self.txt_box1.place(x=3, y=23)
         txt_box2 = Entry(self, width=30)
         txt_box2.insert(END, 'http://')
         txt_box2.place(x=3, y=46)
-        self.ip_movian = txt_box1.get()
+        ip_movian = self.txt_box1.get()
         self.port_movian = '42000'
-        self.url_movian = (f'http://{self.ip_movian}:{self.port_movian}')
+        self.url_movian = (f'http://{ip_movian}:{self.port_movian}')
         period_of_time = 3  # sec
 
 
@@ -104,7 +104,9 @@ class Window(Frame):
 
     def test_ip(self):
 
-        rep = os.system('ping -w 1 ' + self.ip_movian)
+        ip_movian = self.txt_box1.get()
+
+        rep = os.system('ping -w 1 ' + ip_movian)
         if rep == 0:
             print('server is up')
             self.lbl.configure(text="Connection Established... !!")
@@ -115,8 +117,10 @@ class Window(Frame):
 
     def down_log(self):
 
+        ip_movian = self.txt_box1.get()
+
         try:
-            response = requests.get(f'http://{self.ip_movian}:{self.port_movian}', timeout=5 )
+            response = requests.get(f'http://{ip_movian}:{self.port_movian}', timeout=5 )
             if response:
                 print('Download OK... !')
                 recieve = requests.get(f'{self.url_movian}/api/logfile/0?mode=download')
