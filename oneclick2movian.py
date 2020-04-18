@@ -69,10 +69,10 @@ class Window(Frame):
         txt_box2 = Entry(self, width=30)
         txt_box2.insert(END, 'http://')
         txt_box2.place(x=3, y=46)
-        ip_movian = self.txt_box1.get()
+        #ip_movian = self.txt_box1.get()
         self.port_movian = '42000'
-        self.url_movian = (f'http://{ip_movian}:{self.port_movian}')
-        period_of_time = 3  # sec
+        #url_movian = (f'http://{ip_movian}:{self.port_movian}')
+        #period_of_time = 3  # sec
 
 
     def OpenFile(self):
@@ -80,7 +80,7 @@ class Window(Frame):
         name = askopenfilename(initialdir="" + self.def_path, filetypes=(("Zip File", "*.zip"), ("All Files", "*.*")), title="Choose a Plugin")
         dir_to_server = os.path.dirname(name)
         base_name = os.path.basename(name)
-        startHTTPServer(dir_to_server)
+        self.startHTTPServer(dir_to_server)
         webbrowser.open(f'{self.url_movian}/?url=http://{IPAddr}:8080/{base_name}')
         # Using try in case user types in unknown file or closes without choosing a file.
         try:
@@ -123,7 +123,8 @@ class Window(Frame):
             response = requests.get(f'http://{ip_movian}:{self.port_movian}', timeout=5 )
             if response:
                 print('Download OK... !')
-                recieve = requests.get(f'{self.url_movian}/api/logfile/0?mode=download')
+                url_movian = (f'http://{ip_movian}:{self.port_movian}')
+                recieve = requests.get(f'{url_movian}/api/logfile/0?mode=download')
                 with open(f'{self.def_path}\movian0.log', 'wb') as fo:
                     fo.write(recieve.content)
                 self.lbl.configure(text="Download OK... !!")
@@ -162,6 +163,7 @@ elif os.name == 'nt':
 else:
     home = os.environ['HOMEPATH']
 
+# we need to fix the path for linux/unix
 def_path = os.path.join(os.path.join(home), 'Desktop')
 
 
