@@ -91,6 +91,7 @@ class Window(Frame):
 
 
     def startHTTPServer(self,dir_to_server):
+
         PORT = 8080
         os.chdir(dir_to_server)
         Handler = http.server.SimpleHTTPRequestHandler
@@ -103,8 +104,6 @@ class Window(Frame):
 
     def test_ip(self):
 
-        self.lbl.configure(text="")
-
         rep = os.system('ping -w 1 ' + self.ip_movian)
         if rep == 0:
             print('server is up')
@@ -115,8 +114,6 @@ class Window(Frame):
 
 
     def down_log(self):
-
-        self.lbl.configure(text="")
 
         try:
             response = requests.get(f'http://{self.ip_movian}:{self.port_movian}', timeout=5 )
