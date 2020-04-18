@@ -10,6 +10,7 @@ import webbrowser
 import threading
 import time
 import platform
+import threading
 from tkinter import *
 from tkinter import ttk
 from tkinter.filedialog import *
@@ -68,36 +69,39 @@ class Window(Frame):
         txt_box2 = Entry(self, width=30)
         txt_box2.insert(END, 'http://')
         txt_box2.place(x=3, y=46)
-        #ip_movian = self.txt_box1.get()
         self.port_movian = '42000'
-        #url_movian = (f'http://{ip_movian}:{self.port_movian}')
-        #period_of_time = 3  # sec
+        self.http_server_started = False
 
 
     def OpenFile(self):
 
+        ip_movian = self.txt_box1.get()
         name = askopenfilename(initialdir="" + self.def_path, filetypes=(("Zip File", "*.zip"), ("All Files", "*.*")), title="Choose a Plugin")
         dir_to_server = os.path.dirname(name)
         base_name = os.path.basename(name)
-        self.startHTTPServer(dir_to_server)
-        webbrowser.open(f'{self.url_movian}/?url=http://{IPAddr}:8080/{base_name}')
-        # Using try in case user types in unknown file or closes without choosing a file.
-        try:
-            with open(name, 'r') as UseFile:
-                print(UseFile.read())
-        except:
-            self.messagebox.showinfo('Error', 'Cancel')
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # get a free port
+        s.bind(('', 0))
+        addr, port = s.getsockname()
+        s.close()
+
+        if not self.http_server_started:
+
+            shs = self.startHTTPServer;
+            daemon = threading.Thread(target=shs , args=(dir_to_server, port))
+            #daemon.setDaemon(True) # Set as a daemon so it will be killed once the main thread is dead.
+            daemon.start()
+
+            webbrowser.open(f'http://{ip_movian}:{self.port_movian}/showtime/open?url=http://{addr}:{port}/{base_name}', new=1, autoraise=True)
+            self.lbl.configure(text=f'http://{ip_movian}:{self.port_movian}/showtime/open?url=http://{self.myip}:{port}/{base_name}')
 
 
-    def startHTTPServer(self,dir_to_server):
+    def startHTTPServer(self,dir_to_server, port):
 
-        PORT = 8080
         os.chdir(dir_to_server)
         Handler = http.server.SimpleHTTPRequestHandler
-        httpd = socketserver.TCPServer(("", PORT), Handler)
-        print("serving at port", PORT)
-        # webbrowser.open(f'{url_movian}/?url=http://{IPAddr}:8080/torrent.zip') ????????????
-        # can i use a timer to stop the server after 5 sec
+        httpd = socketserver.TCPServer(('', port), Handler)
+        print("serving at port", port)
         httpd.serve_forever()
 
 
@@ -154,36 +158,39 @@ class Window(Frame):
 
 
 
+def main():
 
-# check if is windows
-is_windows = any(platform.win32_ver())
+    # check if is windows
+    is_windows = any(platform.win32_ver())
 
-# Default path
-home = os.curdir
-if 'HOME' in os.environ:
-    home = os.environ['HOME']
-elif os.name == 'posix':
-    home = os.path.expanduser("~/")
-elif os.name == 'nt':
-    if 'HOMEPATH' in os.environ and 'HOMEDRIVE' in os.environ:
-        home = os.environ['HOMEDRIVE'] + os.environ['HOMEPATH']
-else:
-    home = os.environ['HOMEPATH']
-
-
-
-
-# Socket
-hostname = socket.gethostname()
-IPAddr = socket.gethostbyname(hostname)
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a TCP/IP socket
+    # Default path
+    home = os.curdir
+    if 'HOME' in os.environ:
+        home = os.environ['HOME']
+    elif os.name == 'posix':
+        home = os.path.expanduser("~/")
+    elif os.name == 'nt':
+        if 'HOMEPATH' in os.environ and 'HOMEDRIVE' in os.environ:
+            home = os.environ['HOMEDRIVE'] + os.environ['HOMEPATH']
+    else:
+        home = os.environ['HOMEPATH']
 
 
-# Gui
-root = Tk()
-app = Window(home,root)
-root.title("Movian One Click Plugin Installer v0.2")
-root.geometry('600x300')
-root.resizable(False, False)
-root.mainloop()
+    # Socket
+    hostname = socket.gethostname()
+    IPAddr = socket.gethostbyname(hostname)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a TCP/IP socket
+
+    # Gui
+    root = Tk()
+    app = Window(home, root)
+    root.title("Movian One Click Plugin Installer v0.2")
+    root.geometry('600x300')
+    root.resizable(False, False)
+    root.mainloop()
+
+
+
+if __name__ == "__main__":
+    main()
 
