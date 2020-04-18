@@ -12,11 +12,10 @@ import time
 import platform
 from tkinter import *
 from tkinter import ttk
-from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import *
 from tkinter import messagebox
 from tkinter.ttk import *
 from pythonping import ping
-
 
 
 class Window(Frame):
@@ -46,9 +45,9 @@ class Window(Frame):
         self.pack(fill=BOTH, expand=1)
         btn0 = Button(self, text="Test IP", command=self.test_ip)
         btn0.place(x=10, y=110)
-        btn1 = Button(self, text="Download Log", command=self.down_log)
+        btn1 = Button(self, text="Download Log", command= self.down_log)
         btn1.place(x=93, y=110)
-        btn2 = Button(self, text="Choose Path", command=self.OpenFile)
+        btn2 = Button(self, text="Choose Path", command= self.OpenFile)
         btn2.place(x=196, y=110)
         btn3 = Button(self, text="Exit", command=self.exitProgram)
         btn3.place(x=288, y=110)
@@ -119,21 +118,26 @@ class Window(Frame):
 
         ip_movian = self.txt_box1.get()
 
+        print (ip_movian)
+
         try:
-            response = requests.get(f'http://{ip_movian}:{self.port_movian}', timeout=5 )
-            if response:
-                print('Download OK... !')
-                url_movian = (f'http://{ip_movian}:{self.port_movian}')
-                recieve = requests.get(f'{url_movian}/api/logfile/0?mode=download')
-                with open(f'{self.def_path}\movian0.log', 'wb') as fo:
-                    fo.write(recieve.content)
-                self.lbl.configure(text="Download OK... !!")
+            response = requests.get(f'http://{ip_movian}:{self.port_movian}', timeout=10 )
         except:
             self.lbl.configure(text="No Connection... !!")
+            return
 
+        url_movian = (f'http://{ip_movian}:{self.port_movian}')
+        recieve = requests.get(f'{url_movian}/api/logfile/0')
+        f = asksaveasfile(mode='wb' , defaultextension='*.*')
+        if f is None: # asksaveasfile return `None` if dialog closed with "cancel".
+            print("askforfile failed")
+            return
+        f.write(recieve.content)
+        f.close()
+        print('Download OK... !')
+        self.lbl.configure(text="Download OK... !!")
 
     def install_plugin(self):
-        self.lbl.configure(text="")
         self.lbl.configure(text="Not yet... !!")
 
 
@@ -163,8 +167,7 @@ elif os.name == 'nt':
 else:
     home = os.environ['HOMEPATH']
 
-# we need to fix the path for linux/unix
-def_path = os.path.join(os.path.join(home), 'Desktop')
+
 
 
 # Socket
@@ -175,7 +178,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a TCP/IP socket
 
 # Gui
 root = Tk()
-app = Window(def_path,root)
+app = Window(home,root)
 root.title("Movian One Click Plugin Installer v0.2")
 root.geometry('600x300')
 root.resizable(False, False)
