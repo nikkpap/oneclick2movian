@@ -104,8 +104,11 @@ class Window(Frame):
     def test_ip(self):
 
         ip_movian = self.txt_box1.get()
+        if os.name == 'nt':
+            rep = os.system("ping -n 1 %s" % ip_movian)
+        else :
+            rep = os.system('ping -w 1 %s' % ip_movian)
 
-        rep = os.system('ping -w 1 ' + ip_movian)
         if rep == 0:
             print('server is up')
             self.lbl.configure(text="Connection Established... !!")
