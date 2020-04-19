@@ -133,17 +133,27 @@ class Window(Frame):
     def test_ip(self):
 
         ip_movian = self.txt_box1.get()
+
         if os.name == 'nt':
-            rep = os.system("ping -n 1 %s" % ip_movian)
+            rep = str(subprocess.Popen(["ping.exe",ip_movian],stdout = subprocess.PIPE).communicate()[0], 'utf-8')
+            print(rep)
+
+            if ('unreachable' in rep):
+                print('server is down')
+                self.lbl.configure(text="No Connection... !!")
+            else: 
+                print('server is up')
+                self.lbl.configure(text="Connection Established... !!")
         else :
             rep = os.system('ping -w 1 %s' % ip_movian)
 
-        if rep == 0:
-            print('server is up')
-            self.lbl.configure(text="Connection Established... !!")
-        else:
-            print('server is down')
-            self.lbl.configure(text="No Connection... !!")
+            if rep == 0:
+                print('server is up')
+                self.lbl.configure(text="Connection Established... !!")
+            else:
+                print('server is down')
+                self.lbl.configure(text="No Connection... !!")
+
 
 
     def down_log(self):
