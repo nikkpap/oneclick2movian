@@ -1,8 +1,6 @@
-####################################################################
-# Import modules
-####################################test################################
+#!/usr/bin/env python
+
 import requests
-import http.server
 import socketserver
 import os
 import socket
@@ -11,12 +9,53 @@ import threading
 import time
 import platform
 import threading
+import queue as Queue
+import subprocess as commands # only python3
+from http.server import HTTPServer
+from http.server import SimpleHTTPRequestHandler
 from tkinter import *
 from tkinter import ttk
 from tkinter.filedialog import *
 from tkinter import messagebox
 from tkinter.ttk import *
 from pythonping import ping
+
+
+
+
+class ServerThread(threading.Thread):
+
+
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.queue = server_queue
+        self.is_server_running = False 
+        self.daemon = False
+
+
+    def create_server(self, port=8000):
+        self.server = HTTPServer((ip_address, port), SimpleHTTPRequestHandler)
+        self.serv_info = self.server.socket.getsockname()
+
+
+    def run(self):
+        while True:
+            if not self.queue.empty():
+                i = self.queue.get()
+                print(i)
+                if i[0] == 'start':
+                    self.create_server(port=int(i[1]))
+                    self.is_server_running = True
+                    print('SERVING @: {}:{}'.format(self.serv_info[0],self.serv_info[1]))
+                    self.server.serve_forever()
+                elif i[0] == 'stop':
+                    self.is_server_running=False
+                    print('SERVER SHUTDOWN')
+                    self.server = None
+
+
+
+
 
 
 class Window(Frame):
@@ -70,7 +109,6 @@ class Window(Frame):
         txt_box2.insert(END, 'http://')
         txt_box2.place(x=3, y=46)
         self.port_movian = '42000'
-        self.http_server_started = False
 
 
     def OpenFile(self):
@@ -79,30 +117,17 @@ class Window(Frame):
         name = askopenfilename(initialdir="" + self.def_path, filetypes=(("Zip File", "*.zip"), ("All Files", "*.*")), title="Choose a Plugin")
         dir_to_server = os.path.dirname(name)
         base_name = os.path.basename(name)
-
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # get a free port
-        s.bind(('', 0))
-        addr, port = s.getsockname()
-        s.close()
-
-        if not self.http_server_started:
-
-            shs = self.startHTTPServer;
-            daemon = threading.Thread(target=shs , args=(dir_to_server, port))
-            #daemon.setDaemon(True) # Set as a daemon so it will be killed once the main thread is dead.
-            daemon.start()
-
-            webbrowser.open(f'http://{ip_movian}:{self.port_movian}/showtime/open?url=http://{addr}:{port}/{base_name}', new=1, autoraise=True)
-            self.lbl.configure(text=f'http://{ip_movian}:{self.port_movian}/showtime/open?url=http://{self.myip}:{port}/{base_name}')
-
-
-    def startHTTPServer(self,dir_to_server, port):
-
         os.chdir(dir_to_server)
-        Handler = http.server.SimpleHTTPRequestHandler
-        httpd = socketserver.TCPServer(('', port), Handler)
-        print("serving at port", port)
-        httpd.serve_forever()
+
+        port=0
+        server_queue.put(('start', port))
+        # wait for the server_thread to switch is_server_running = True
+        while not server_thread.is_server_running:
+            pass
+        p = server_thread.serv_info[1]
+
+        webbrowser.open(f'http://{ip_movian}:{self.port_movian}/showtime/open?url=http://{ip_address}:{p}/{base_name}', new=1, autoraise=True)
+        self.lbl.configure(text=f'http://{ip_address}:{p}/{base_name}')
 
 
     def test_ip(self):
@@ -153,17 +178,28 @@ class Window(Frame):
 
 
     def exitProgram(self):
-        exit()
+        server_queue.put(('stop', ''))
+        os._exit(os.EX_OK)
 
 
 
 
-def main():
 
-    # check if is windows
-    is_windows = any(platform.win32_ver())
+# get my ip address
+def get_ip_address():
+    if os.name == 'posix':
+        ip = commands.getoutput("hostname -I")
+    elif os.name == 'nt':
+        ip = socket.gethostbyname(socket.gethostname())
+    else:
+        ip = ''
+        print('Couldn\'t get local ip')
+    return ip
 
-    # Default path
+
+
+if __name__ == "__main__":
+
     home = os.curdir
     if 'HOME' in os.environ:
         home = os.environ['HOME']
@@ -176,10 +212,11 @@ def main():
         home = os.environ['HOMEPATH']
 
 
-    # Socket
-    hostname = socket.gethostname()
-    IPAddr = socket.gethostbyname(hostname)
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a TCP/IP socket
+
+    ip_address = get_ip_address().split()[0]
+
+    print(ip_address)
+
 
     # Gui
     root = Tk()
@@ -187,10 +224,12 @@ def main():
     root.title("Movian One Click Plugin Installer v0.2")
     root.geometry('600x300')
     root.resizable(False, False)
+
+
+    server_queue = Queue.Queue()
+    server_thread = ServerThread()
+    server_thread.start()
+
     root.mainloop()
 
-
-
-if __name__ == "__main__":
-    main()
 
